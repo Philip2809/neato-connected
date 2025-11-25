@@ -60,6 +60,7 @@ request:
     "user_id": "userid", // hash of some kind?
     "utc_offset": "UTC+1:00UTC+2:00"
 }
+```
 response is just an empty object.
 
 GET /robot/wifi_networks/new/progress

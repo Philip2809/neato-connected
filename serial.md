@@ -1,14 +1,58 @@
 
 
 ## Serial interface
-There seams to be two different serial interfaces on the robot. On you can connect via the usb port where the dustbin resides, and blocks. The other is as a JST connector? that you can connect to via a TTY adapter. 
+There seams to be two different serial interfaces on the robot. One you can connect via the usb port where the dustbin resides, and blocks. The other one with jumper wires or soldering. Here you can connect via a TTY adapter. 
 
-On the Neato D3, looking at the robot from the front, there is 4 pins, they are from left to right;
-1. RX
-2. Not sure, think 3.3V (it has 3.3V on it)
-3. TX
-4. GND
 
+### On different robots
+
+**NOTE: I only have a D3, if you can verify this data separatly, please tell me**
+
+#### D3/D4
+I suspect that the D4 looks the same as the D3, because from some research the only difference was their battery and maybe filter.
+
+![pcb-top-annotated](/pics/d3/pcb-top-annotated.png)
+![pcb-top](/pics/d3/pcb-top.jpg)
+![pcb-bottom](/pics/d3/pcb-bottom.jpg)
+
+#### D5/D6
+Inside looks practically identical to D3. It has the extra sidebrush motor that is missing in the D3. [source](https://www.youtube.com/watch?v=OqgD7zuyLuA) 
+
+![d5](./pics/other-robots/d5.png)
+#### D7
+Looks once again practically identical to the D3. It has the extra sidebrush motor and the status leds are from a separate board. [source](https://www.youtube.com/watch?v=i-CzfMNqBFw)
+
+![d7](./pics/other-robots/d7.png)
+
+### Pinout for D3
+But I am very very certain it is the same for D3/D4/D5/D6/D7.
+
+The pinout looks like this:
+![pinout on d3](./pics/d3/pinout.png)
+![pinout connected](./pics/d3/pinout-connected.png)
+
+my setup
+![my setup](./pics/d3/pinout-tty-setup.jpg)
+
+#### D70/D75/D80/D85
+These use a compleatly different pcb and they have the serial debug strips on the left side of the chassi. 
+
+d80
+![d80](./pics/other-robots/d80.png)
+d85
+![d85](./pics/other-robots/d85.png)
+
+[source d80](https://www.youtube.com/watch?v=oIHImYWqOh4)
+[source d85](https://www.youtube.com/watch?v=DixC1pDCsh8)
+
+I suspect the D70 and D75 look the same.
+
+The pinout for these should be like this:
+![pinout for d70/d75/d80/85](./pics/other-robots/pinout.d70-d75-d80-d85.png)
+
+[source](https://github.com/jeroenterheerdt/neato-serial/issues/3#issuecomment-510543522)
+
+### Connecting
 Connecting to a USB TTY Adapter you only need to connect ground and RX to the robot TX to the output, to be able to send commands, you connect the TX to the robot RX. My hope is that the 2nd pin is 3.3V allowing us to power an esp32 or similar to send commands via the serial interface.
 
 Connecting to the serial interface with screen:
@@ -102,6 +146,11 @@ Now the commandline is not case-sensetive and it also checks if the string you w
 GetActiveServices
 GetLoggingType
 GetState
+```
+
+Commands that was in the old programming manual but I don't know how to use:
+```
+GetSysLog
 ```
 
 #### Differences I found in 3.2.0 and 4.5.3
