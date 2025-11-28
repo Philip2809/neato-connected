@@ -377,7 +377,7 @@ button:
   - platform: template
     name: "Locate Robot"
     on_press:
-      - uart.write: "PlaySound SoundId 16 \n"  
+      - uart.write: "PlaySound SoundId 20 \n"  
 
   - platform: template
     name: "GetUsage"

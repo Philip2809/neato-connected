@@ -22,4 +22,17 @@ Once the bot was working, my journey began. I have split up the different parts 
 ## Serial connection via ESPHOME
 The suspected 3.3v pin is 3.3v and I have been able to keep an esp32cam connected and running the configuration at [esphome.yaml](./esphome.yaml)
 
-Currently this is mainly a POC but I am working on making it an fully working controller for the robot. Currently the lamdba function is probably still very inefficient and needs cleanup after the LLM changed it. 
+Currently this is mainly a POC but I am working on making it an fully working controller for the robot. Currently the lamdba function is probably still very inefficient and needs cleanup after the LLM changed it.
+
+Currently a work in progress, currently it looks like this:
+
+![controls](./pics/esphome/controls.png)
+![sensors](./pics/esphome/sensors.png)
+![diagnostic](./pics/esphome/diagnostic.png)
+
+You can also send commands via an action and play sounds via an soundid. I gets errors and state every 2 sec, info about charger/battery every 30 sec and testmode/version is still a work in progress, but should work kinda? GetVerion happens when the esphome boots, but because esphome would boot before the robot, if the esphome does not restart or you send the command manually, it will say "Unavailable"
+
+I drilled a small hole into the bumper to be able to route the cables via it, added a piece of plastic so that the cables wont be squised and tried to tape the esp to where the handle part is, I got error: `UI_ERROR_DECK_DEBRIS`. I will experiment to find out where to put the esp for best results, my next try will be somehow on the back of it. The cables right now are just have put a piece of tape over the connections, but I will be soldering the wieres once I have it figured out. 
+
+![esp-on-robot](./pics/esphome/esp-on-robot.png)
+![esp-on-robot-taped-test-1](./pics/esphome/esp-on-robot-test1.png)
