@@ -33,7 +33,7 @@ Currently this is mainly a POC but I am working on making it an fully working co
 Look at [debug port connection](debug-port-connection.md) on how I drilled a hole to access the debug port, for this you don't even need to open the device.
 
 Stated to experiment with commands if it is possible to get the floormap stuff [experimentations](./command-experiments.md)
-The UserSettings thing is a little wierd for me, even when I toggle them, they don't always change, not sure if that is because the battery is low for me or the firmware version, but it seams to respect most of them except for WiFi, it still advertises it's AP when it is off, but coud be the older firmware!
+The UserSettings thing is a little wierd for me, even when I toggle them, they don't always change, not sure if that is because the battery is low for me or the firmware version, but it seams to respect most of them except for WiFi, it still advertises it's AP when it is off, but coud be the older firmware! It also seams that changes take effect after an reboot, but this also needs more investigating!
 
 Currently a work in progress, currently it looks like this:
 
