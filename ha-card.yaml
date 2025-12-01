@@ -35,11 +35,14 @@ cards:
       icon:
         - color: |
             [[[ 
+              const uiState = states[`sensor.${variables.robot_id}_ui_state`]?.state || '';
+              if (uiState === "Starting...") return '#edb926';
+              if (uiState === "Shutting down...") return 'gray';
               const err = states[`sensor.${variables.robot_id}_robot_error`]?.state || '';
-              const alert = states[`sensor.${variables.robot_id}_robot_alert`]?.state || '';
               if (!err.startsWith('200')) return '#950606';
-              else if (!alert.startsWith('200')) return '#edb926';
-              else return '#00cc00';
+              const alert = states[`sensor.${variables.robot_id}_robot_alert`]?.state || '';
+              if (!alert.startsWith('200')) return '#edb926';
+              return '#00cc00';
             ]]]
       card:
         - border-radius: 20px
@@ -166,6 +169,30 @@ cards:
         name: Spot Clean
         tap_action:
           action: toggle
+        hold_action:
+          action: fire-dom-event
+          browser_mod:
+            service: browser_mod.popup
+            data:
+              title: Spot Clean - Height and Width
+              size: normal
+              content:
+                type: vertical-stack
+                cards:
+                  - type: entities
+                    entities:
+                      - entity: number.REPLACE_WITH_DEVICE_ID_spot_clean_height
+                        name: Height
+                        icon: mdi:arrow-up-down
+                      - entity: number.REPLACE_WITH_DEVICE_ID_spot_clean_width
+                        name: Width
+                        icon: mdi:arrow-left-right
+                  - type: custom:button-card
+                    size: 20%
+                    name: Start Spot Cleaning
+                    entity: button.REPLACE_WITH_DEVICE_ID_spot_clean_height_width
+                    tap_action:
+                      action: toggle
       - type: custom:button-card
         variables:
           robot_id: REPLACE_WITH_DEVICE_ID

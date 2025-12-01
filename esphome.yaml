@@ -45,6 +45,7 @@ script:
   - id: robotShutdown
     mode: queued
     then:
+      - lambda: 'id(uiState).publish_state("Shutting down...");'
       - uart.write: "TestMode On \n"
       - delay: 100ms
       - uart.write: "SetSystemMode Shutdown \n"
@@ -53,6 +54,7 @@ script:
     mode: queued
     then:
       - lambda: 'id(initial_ready) = false;' # I want to refetch all data in case we powercycle
+      - lambda: 'id(uiState).publish_state("Shutting down...");'
       - uart.write: "TestMode On \n"
       - delay: 100ms
       - uart.write: "SetSystemMode PowerCycle \n"
@@ -78,24 +80,6 @@ interval:
 api:
   encryption:
     key: !!!!!YOUR KEY HERE!!!!!!
-  # actions:
-  #   - action: spot_clean
-  #     variables:
-  #       width: int
-  #       height: int
-  #     then:
-  #       - lambda: |-
-  #           // Clamp values between 100-400
-  #           if (width < 100) width = 100;
-  #           if (width > 400) width = 400;
-  #           if (height < 100) height = 100;
-  #           if (height > 400) height = 400;
-  #           char buf[64];
-  #           sprintf(buf, "Clean Spot Width %d Height %d \n", width, height);
-  #           id(uart_bus).write_str(buf);
-  #           ESP_LOGD("spot_clean", "Sending command: %s", buf);
-
-
 
   actions:
     - action: send_cmd
@@ -679,6 +663,29 @@ switch:
       - script.execute: get_user_settings
     entity_category: "diagnostic"
 
+
+number:
+  - platform: template
+    id: spot_width
+    min_value: 100
+    max_value: 400
+    step: 1
+    unit_of_measurement: cm
+    mode: SLIDER
+    name: Spot Clean Width
+    optimistic: true
+
+  - platform: template
+    id: spot_height
+    min_value: 100
+    max_value: 400
+    step: 1
+    unit_of_measurement: cm
+    mode: SLIDER
+    name: Spot Clean Height
+    optimistic: true
+
+
 button:
   - platform: template
     name: "House Clean"
@@ -693,12 +700,43 @@ button:
       - uart.write: "Clean Spot \n"
 
   - platform: template
+    name: "Spot Clean (Height & Width)"
+    icon: mdi:target
+    on_press:
+      then:
+        - uart.write: !lambda |-
+            // Convert numbers to integers
+            int w = (int) id(spot_width).state;
+            int h = (int) id(spot_height).state;
+
+            std::string cmd = "Clean Spot Width " + std::to_string(w) + " Height " + std::to_string(h) + "\n";
+            return std::vector<uint8_t>(cmd.begin(), cmd.end());
+
+  - platform: template
     name: "Stop Cleaning"
     icon: mdi:stop
     on_press:
       - uart.write: "Clean Stop \n"
       - delay: 100ms
+      - script.execute: powercycle
+
+  - platform: template
+    name: "Pause Cleaning"
+    icon: mdi:stop
+    on_press:
+      # Set SetUIError dance makes sure the robot realizes it is in the "Paused" state, otherwise it will keep reporting "Running" until you restart or press the button
+      - uart.write: "Clean Stop \n"
+      - delay: 50ms
+      - uart.write: "SetUIError setalert UI_ALERT_INFO_THANK_YOU \n"
+      - delay: 50ms
+      - uart.write: "SetUIError clearalert UI_ALERT_INFO_THANK_YOU \n"
       - script.execute: powercycle 
+
+  - platform: template
+    name: "Resume Cleaning"
+    icon: mdi:play
+    on_press:
+      - uart.write: "Clean \n"
 
   - platform: template
     name: "Locate Robot"
