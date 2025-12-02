@@ -4,8 +4,7 @@ Shutdown sequence:
 
 Neato LEGO Distro Release 1.7.0-2933_10060147_cfae4f98 Neato-Robot ttymxc1
 
-Neato-Robot login: [[1B][0;32m  OK  [1B][0m] Removed slice [1B][0;1;39msystem-getty.slice[1B][0m.
-[[1B][0;32m  OK  [1B][0m] Stopped target [1B][0;1;39mBluetooth[1B][0m.
+Neato-Robot login: [[1B][0;32m  OK  [1B][0m] Removed slice [1B][0;1;39msystem-getty.slice[1B][0m.[[1B][0;32m  OK  [1B][0m] Stopped target [1B][0;1;39mBluetooth[1B][0m.
 [[1B][0;32m  OK  [1B][0m] Stopped target [1B][0;1;39mMulti-User System[1B][0m.
 [[1B][0;32m  OK  [1B][0m] Stopped target [1B][0;1;39mLogin Prompts[1B][0m.
 [[1B][0;32m  OK  [1B][0m] Stopped target [1B][0;1;39mHost and Network Name Lookups[1B][0m.
