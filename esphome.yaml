@@ -5,9 +5,7 @@ esphome:
   on_boot:
     - priority: 600
       then:
-        - lambda: 'id(robotState).publish_state("Booting...");'
-        # - delay: 1min # the robot usally takes 30-60 sec to boot
-        # - script.execute: get_all_data
+        - lambda: 'id(uiState).publish_state("Starting...");'
 
 esp32:
   board: esp32dev
@@ -80,6 +78,10 @@ interval:
 api:
   encryption:
     key: !!!!!YOUR KEY HERE!!!!!!
+
+  project:
+    name: philip2809.neato-connected
+    version: "0.1.0"
 
   actions:
     - action: send_cmd
@@ -328,12 +330,7 @@ uart:
               else if (line.find("Schedule is Enabled") != std::string::npos) id(scheduleEnabled).publish_state(true);
               else if (line.find("Schedule is Disabled") != std::string::npos) id(scheduleEnabled).publish_state(false);
             }
-          }
-
-          else {
-              id(uiState).publish_state(command.c_str());
-          }
-
+          } else if (command.find("ARCHES Board") != std::string::npos) id(uiState).publish_state("Starting...");
 
 
           // ---- OPTIONAL: print each line for debugging ----
@@ -691,6 +688,8 @@ button:
     name: "House Clean"
     icon: mdi:home
     on_press:
+      - uart.write: "PlaySound soundid 1 \n"
+      - delay: 100ms
       - uart.write: "Clean \n"
 
   - platform: template
@@ -722,7 +721,7 @@ button:
 
   - platform: template
     name: "Pause Cleaning"
-    icon: mdi:stop
+    icon: mdi:pause
     on_press:
       # Set SetUIError dance makes sure the robot realizes it is in the "Paused" state, otherwise it will keep reporting "Running" until you restart or press the button
       - uart.write: "Clean Stop \n"

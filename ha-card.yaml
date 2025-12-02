@@ -1,4 +1,7 @@
 type: vertical-stack
+variables:
+  project: philip2809.neato-connected
+  version: 0.1.0
 cards:
   - type: custom:button-card
     variables:
