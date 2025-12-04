@@ -15,7 +15,7 @@ esphome:
 #   Please try to keep the versions the same, and check the github for updates!
   project: 
     name: philip2809.neato-connected
-    version: 1.0-b.2
+    version: 1.0-b.3
 
   on_boot:
     - priority: 600
@@ -43,6 +43,8 @@ script:
       - uart.write: "GetVersion \n"    
       - delay: 50ms  
       - uart.write: "GetUserSettings \n"  
+      - delay: 50ms
+      - uart.write: "GetWarranty \n"
       - delay: 50ms  
       - uart.write: "TestMode \n"
   
@@ -85,6 +87,8 @@ interval:
     then: 
       - uart.write: "GetCharger \n"
 
+web_server:
+  port: 80
 
 # Enable Home Assistant API
 api:
@@ -133,7 +137,7 @@ uart:
     after:
       bytes: 0
       #timeout: 5sec
-      #delimiter: "\r\n"
+      #delimiter: "\n"
       delimiter: "\x1A"
     sequence:
       - lambda: |-
@@ -150,6 +154,11 @@ uart:
             // trim trailing
             s.erase(std::find_if(s.rbegin(), s.rend(),
                 [](unsigned char ch){ return !std::isspace(ch); }).base(), s.end());
+          };
+
+          // --- HEX DECODER ---
+          auto hex_to_uint32 = [](const std::string &hex) -> uint32_t {
+              return static_cast<uint32_t>(strtoul(hex.c_str(), nullptr, 16));
           };
 
           // ---- SPLIT ON CRLF ----
@@ -175,7 +184,16 @@ uart:
           // ---- DETECT WHICH COMMAND WAS USED ----
           std::string command = lines[0];  // first line (GetErr, GetState, etc.)
 
+
           ESP_LOGI("uart_parser", "COMMAND: %s", command.c_str());
+          // ---- OPTIONAL: print each line for debugging ----
+          for (auto &line : lines) {
+            std::vector<uint8_t> v(line.begin(), line.end());
+            UARTDebug::log_string(direction, v);
+            //ESP_LOGI("uart_parser", "LINE: %s", line.c_str());
+          }
+
+
 
           // ---- SPECIAL PARSING FOR GetErr ----
           if (command == "GetErr") {
@@ -242,6 +260,33 @@ uart:
               else if (key == "Discharge_mAH") id(chargerDischarge_mAH).publish_state(atof(value.c_str()));
             }
           }
+
+          else if (command == "GetWarranty") {
+              // Format after the header:
+              // Item,Value
+              // CumulativeCleaningTimeInSecs,001ce34f
+              // CumulativeBatteryCycles,01f7
+              // ValidationCode,15648b6e
+
+              for (size_t i = 2; i < lines.size(); i++) {
+                  std::string &line = lines[i];
+                  size_t comma = line.find(',');
+                  if (comma == std::string::npos) continue;
+
+                  std::string key = line.substr(0, comma);
+                  std::string value = line.substr(comma + 1);
+
+                  // Trim whitespace
+                  trim(key);
+                  trim(value);
+                  
+                  if (key == "CumulativeBatteryCycles") {
+                      uint32_t cycles = hex_to_uint32(value);
+                      id(batteryCycles).publish_state(cycles);
+                  }
+              }
+          }
+
           else if (command == "GetVersion") {
             for (auto &line : lines) {
               size_t comma = line.find(',');
@@ -262,7 +307,8 @@ uart:
           }
           // ------------------------------ TESTMODE -----------------------------------------
           else if (command == "TestMode") {
-            ESP_LOGI("testmode", "LINE: %s", lines[1].c_str());
+            ESP_LOGI("testmode", "LINE1: %s", lines[1].c_str());
+            //ESP_LOGI("testmode", "LINE1: %s", lines[1].c_str());
             if (lines[1].find(": On") != std::string::npos) id(testMode).publish_state(true);
             else if (lines[1].find(": Off") != std::string::npos) id(testMode).publish_state(false);
           } 
@@ -313,7 +359,7 @@ uart:
                      if (key == "Language") id(language).publish_state(value.c_str());
                 else if (key == "ClickSounds") id(clickSounds).publish_state(value == "ON");
                 else if (key == "LED") id(led).publish_state(value == "ON");
-                //else if (key == "Wall Enable") id(wallEnable).publish_state(value.c_str());
+                else if (key == "Wall Enable") id(wallEnable).publish_state(value == "ON");
                 else if (key == "Eco Mode") id(ecoMode).publish_state(value == "ON");
                 else if (key == "IntenseClean") id(intenseClean).publish_state(value == "ON");
                 else if (key == "WiFi") id(wifiOnOff).publish_state(value == "ON");
@@ -340,13 +386,11 @@ uart:
             }
           } else if (command.find("ARCHES Board") != std::string::npos) id(uiState).publish_state("Starting...");
 
+          //else {
+            //  id(uiState).publish_state(command.c_str());
+          //}
 
-          // ---- OPTIONAL: print each line for debugging ----
-          for (auto &line : lines) {
-            std::vector<uint8_t> v(line.begin(), line.end());
-            UARTDebug::log_string(direction, v);
-            ESP_LOGI("uart_parser", "LINE: %s", line.c_str());
-          }
+
 
 
 
@@ -420,6 +464,12 @@ sensor:
     unit_of_measurement: "count"
     entity_category: "diagnostic"
 
+  # --- GetWarranty ---
+  - platform: template
+    name: "Battery Cycles"
+    id: batteryCycles
+    unit_of_measurement: "cycles"
+    entity_category: "diagnostic"
 
 binary_sensor:
   # --- GetErr ---
@@ -535,15 +585,15 @@ text_sensor:
 switch:
   - platform: template
     name: "Test Mode"
-    optimistic: true
+    # optimistic: true
     id: testMode
     turn_on_action:
       - uart.write: "TestMode On \n"
-      - delay: 100ms
+      - delay: 500ms
       - uart.write: "TestMode \n"
     turn_off_action:
       - uart.write: "TestMode Off \n"
-      - delay: 100ms
+      - delay: 500ms
       - uart.write: "TestMode \n"
     entity_category: "diagnostic"
 
@@ -571,18 +621,18 @@ switch:
       - script.execute: get_user_settings
     entity_category: "diagnostic"
 
-  # - platform: template
-  #   name: "Wall Enable"
-  #   optimistic: true
-  #   id: clickSounds
-  #   turn_on_action:
-  #     - uart.write: "SetUserSettings ButtonClick ON \n"
-  #     - delay: 100ms
-  #     - uart.write: "GetUserSettings \n"
-  #   turn_off_action:
-  #     - uart.write: "SetUserSettings ButtonClick OFF \n"
-  #     - delay: 100ms
-  #     - uart.write: "GetUserSettings \n"
+  - platform: template
+    name: "Wall Enable"
+    optimistic: true
+    id: wallEnable
+    turn_on_action:
+      - uart.write: "SetUserSettings WallEnable ON \n"
+      - delay: 100ms
+      - uart.write: "GetUserSettings \n"
+    turn_off_action:
+      - uart.write: "SetUserSettings WallEnable OFF \n"
+      - delay: 100ms
+      - uart.write: "GetUserSettings \n"
 
   - platform: template
     name: "Eco Mode"
@@ -670,6 +720,7 @@ switch:
 
 
 number:
+  # --- Spot cleaning ---
   - platform: template
     id: spot_width
     min_value: 100
@@ -689,6 +740,24 @@ number:
     mode: SLIDER
     name: Spot Clean Height
     optimistic: true
+
+
+select:
+  - platform: template
+    name: "Navigation Mode"
+    id: navigationMode
+    optimistic: true
+    options:
+      - "Normal"
+      - "Gentle"
+      - "Deep"
+      - "Quick"
+    icon: "mdi:robot-vacuum"
+    on_value:
+      then:
+        - uart.write: !lambda |-
+            std::string cmd = std::string("SetNavigationMode ") + x + "\n";
+            return std::vector<uint8_t>(cmd.begin(), cmd.end());
 
 
 button:
