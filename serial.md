@@ -53,7 +53,7 @@ The pinout for these should be like this:
 [source](https://github.com/jeroenterheerdt/neato-serial/issues/3#issuecomment-510543522)
 
 ### Connecting
-Connecting to a USB TTY Adapter you only need to connect ground and RX to the robot TX to the output, to be able to send commands, you connect the TX to the robot RX. My hope is that the 2nd pin is 3.3V allowing us to power an esp32 or similar to send commands via the serial interface.
+Connecting to a USB TTY Adapter you only need to connect ground and RX to the robot TX to the output, to be able to send commands, you connect the TX to the robot RX. 
 
 Connecting to the serial interface with screen:
 `screen /dev/ttyUSB0 115200`

@@ -2,7 +2,7 @@
 
 ## Setup network
 
-If factory reset (by loading the factory IFS or holding the front right and right bumper switches while turning it off (I havn't personally tried this method)) or by holding the left bumper switch while turning the robot off, the next time it turns on it will go into pairing mode. I will host a network called `Neato-{serial-number}` (on my factory firmware it is `neato-{serial-number}`).
+If factory reset (by loading the factory IFS or holding the front right and right bumper switches while turning it off (This method worked once for them, next time it didn't)) or by holding the left bumper switch while turning the robot off, the next time it turns on it will go into pairing mode. It will host a network called `Neato-{serial-number}` (on my factory firmware it is `neato-{serial-number}`).
 
 Connecting to this network, the ip range will be `192.168.219.XXX` with the robot at `192.168.219.1`. (on my factory firmware it is at `192.168.0.1`). 
 
