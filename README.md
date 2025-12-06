@@ -34,7 +34,7 @@ Now due to the shutdown of the cloud for the neato robots, there are three optio
 As far as we know, only the D3, D4, D5, D7 and D7 has the firmware `4.5.3` and currenly the config is based on that so the robots that should work with that firmware is as follows:
 - Confirmed working: **D3, D5, D7**
 - Should work, need confirmation: **D4, D6**
-- Should work with some work: **D70-D85, Connected**
+- Should work with some work: **D70-D85, Connected, [maybe others? please get in touch!]**
 
 **Trickier robots**
 - D8 (probably D9, D10) - These robots use a compleatly different board, chip and firmware, and because the debug interface seams to be behind a password lock, this cannot be controlled directly.
@@ -46,7 +46,7 @@ Sadly to be able to repair your neato vacuum you **need to access an USB port or
 
 if you haven't heard of home assistant yet then this is an awesome time to learn about it! It is an open source home automation tool that puts local control and privacy first. Read more about them on their [website](https://www.home-assistant.io/) and try their [live demo](https://demo.home-assistant.io) if you want! There is a lot of great guides and information about home hassistant on youtube and their forums! They also have some amzing guides on their [site](https://www.home-assistant.io/installation/) to get an home assistant installation going. If you have any questions or problems, don't hesitate to ask for help here in the [discusstions](../discussions) section, on our [discord](https://discord.gg/PAgwhWvyD8) or the home assistant [help](https://www.home-assistant.io/help/) page.
 
-First of all you should start thinking about how you want to keep your robot connected, but if you don't want to commit to opening your robot or drilling an hole in the bumper yet, you can always take the bumper off and connect an esp device to the robot and just run it via Home Assistant. If you don't have an Home Assistant installation you can try to control it via the [web server interface](./ha-images.md#webserver-interface), verify that it will work and then if you want, setup home assistant and use it though that. If you go down this route, please check [here]()
+First of all you should start thinking about how you want to keep your robot connected, but if you don't want to commit to opening your robot or drilling an hole in the bumper yet, you can always take the bumper off and connect an esp device to the robot and just run it via Home Assistant.
 
 **Overview of steps:**
 1. Make sure your robot's firmware is version `4.5.3`
