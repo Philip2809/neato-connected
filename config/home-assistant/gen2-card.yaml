@@ -57,7 +57,8 @@ cards:
           - font-weight: bold
           - animation: |
               [[[ 
-                if (states[`binary_sensor.${variables.robot_id}_charging_active`]?.state !== 'on') return '';
+                const mah = Number(states[`sensor.${variables.robot_id}_charger_mah`]?.state);
+                if ( Number.isNaN(mah) || mah == '0' ) return '';
                 const pct = Number(states[`sensor.${variables.robot_id}_fuel_percent`]?.state);
                 return pct > 35 ? 'pulseGreen 3s infinite' : 'pulseOrange 3s infinite';
               ]]]
