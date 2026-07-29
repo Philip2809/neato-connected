@@ -8,9 +8,9 @@
             error
         {% elif is_state('binary_sensor.' ~ robot_id ~ '_ext_power_present', 'on') %}
             docked
-        {% elif 'STATE_IDLE' or 'STATE_STANDBY' in ui_state %}
+        {% elif ('STATE_IDLE' in ui_state) or ('STATE_STANDBY' in ui_state) %}
             idle
-        {% elif 'RUNNING' or 'STATE_START' in ui_state %}
+        {% elif ('RUNNING' in ui_state) or ('STATE_START' in ui_state) %}
             cleaning
         {% elif 'PAUSED' in ui_state %}
             paused
