@@ -13,6 +13,8 @@ export interface entityConfig {
   sorting_group?: string;
   domain: string;
   id: string;
+  /** Exact name used by name-based ESPHome HTTP endpoints. */
+  api_id?: string;
   state: string;
   detail: string;
   value: string;

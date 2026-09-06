@@ -3,6 +3,7 @@
   "version": "3.0.0",
   "scripts": {
     "start": "npm run dev",
+    "test": "node --test tests/entity-api.test.cjs",
     "dev": "vite",
     "xbuild": "vite build --emptyOutDir",
     "build": "vite build --emptyOutDir",
