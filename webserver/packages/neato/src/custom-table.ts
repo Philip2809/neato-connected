@@ -1,3 +1,4 @@
+import { entityPath } from "./entity-api";
 import { html, css, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import cssReset from "./css/reset";
@@ -102,7 +103,7 @@ export class CustomTable extends LitElement implements RestAction {
   }
 
   restAction(entity: entityConfig, action: string) {
-    fetch(`${window.apiBasePath}/${entity.domain}/${entity.id}/${action}`, {
+    fetch(`${window.apiBasePath}/${entityPath(entity)}/${action}`, {
       method: "POST",
       headers:{
         'Content-Type': 'application/x-www-form-urlencoded'

@@ -1,3 +1,4 @@
+import { normalizeEntity, entityPath } from "./entity-api";
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, state, query } from "lit/decorators.js";
 
@@ -26,7 +27,7 @@ const _unknown_state_events: { [key: string]: number } = {};
 
 window.source?.addEventListener('state', (e: Event) => {
   const messageEvent = e as MessageEvent;
-  const data = JSON.parse(messageEvent.data.replace(/[\u0000-\u001F\u007F-\u009F]/g, ""));
+  const data = normalizeEntity(JSON.parse(messageEvent.data.replace(/[\u0000-\u001F\u007F-\u009F]/g, "")));
   let idx = window.entities.findIndex((x) => x.unique_id === data.id);
   if (idx != -1 && data.id) {
     if (typeof data.value === 'number') {
@@ -59,7 +60,7 @@ window.source?.addEventListener('state', (e: Event) => {
       let domain = parts[0];
       let id = parts.slice(1).join('-');
 
-      fetch(`${window.apiBasePath}/${domain}/${id}?detail=all`, {
+      fetch(`${window.apiBasePath}/${entityPath({ domain, id, api_id: data.api_id })}?detail=all`, {
         method: 'GET',
       })
         .then((r) => {
@@ -82,6 +83,7 @@ window.source?.addEventListener('state', (e: Event) => {
 
 
 function addEntity(data: any) {
+  data = normalizeEntity(data);
   console.log(data);
   let idx = window.entities.findIndex((x) => x.unique_id === data.id);
   if (idx === -1 && data.id) {
