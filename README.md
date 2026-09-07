@@ -95,6 +95,8 @@ Since there is a couple of robots from Neato and they have different firmware ve
 - ³ - Support can be added by version 2
 
 Please refer to the [status.md](./status.md) for project status, roadmap and version meanings!
+
+Gen 2 exposes [motor telemetry for home automation](./gen2-motor-telemetry.md), including running/moving/stationary activity and guidance on combining stopped motors with robot errors when inferring a cleaning cycle.
   
 The ability to create, view and edit floormaps so the robot can get the same functionallity with no-go lines and zones is in the making.
 
