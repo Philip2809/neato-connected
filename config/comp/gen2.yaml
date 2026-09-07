@@ -1,6 +1,7 @@
 substitutions:
   version: "1.2.1"
   type: "gen2"
+  motor_timeout: 10s # Must exceed infointerval; missing samples are not stationary.
   buildinfo: "${version} [TX:${uart_tx} RX:${uart_rx}]"
 
 
@@ -62,6 +63,26 @@ esphome:
 
 
 script:
+  # Valid motor samples restart the watchdog, even if the ESP stays connected
+  # to Home Assistant while the robot stops replying over UART.
+  - id: expire_motor_telemetry
+    mode: restart
+    then:
+      - delay: ${motor_timeout}
+      - script.execute: invalidate_motor_telemetry
+
+  - id: invalidate_motor_telemetry
+    then:
+      - lambda: |-
+          id(motorVacuumRPM).publish_state(NAN);
+          id(motorBrushRPM).publish_state(NAN);
+          id(motorLeftWheelRPM).publish_state(NAN);
+          id(motorRightWheelRPM).publish_state(NAN);
+          id(vacuumMotorRunning).invalidate_state();
+          id(brushRunning).invalidate_state();
+          id(wheelsMoving).invalidate_state();
+          id(motorActivity).publish_state("unavailable");
+
   - id: get_user_settings
     mode: queued
     then:
@@ -71,8 +92,10 @@ script:
   - id: get_all_data
     mode: queued
     then: 
-      - uart.write: "GetErr \n"  
-      - delay: 50ms  
+      - uart.write: "GetErr \n"
+      - delay: 150ms
+      - uart.write: "GetMotors \n"
+      - delay: 150ms
       - uart.write: "GetCharger \n"    
       - delay: 50ms  
       - uart.write: "GetUserSettings \n"  
@@ -145,6 +168,8 @@ interval:
   - interval: ${infointerval}
     then:
       - uart.write: "GetErr \n"
+      - delay: 150ms
+      - uart.write: "GetMotors \n"
   - interval: ${chargerinterval}
     then: 
       - uart.write: "GetCharger \n"
@@ -233,6 +258,66 @@ uart:
                 id(uiState).publish_state("Started, ready for commands!");
                 id(initial_data_get).execute();
             }
+          }
+
+          else if (command == "GetMotors") {
+            // BEGIN motor decoder (exercised by tests/test_gen2_motors.py)
+            struct Sample {
+              float vacuum = NAN, brush = NAN, left = NAN, right = NAN;
+              bool valid = false;
+              bool vacuum_running() const { return valid && std::fabs(vacuum) > 0; }
+              bool brush_running() const { return valid && std::fabs(brush) > 0; }
+              bool wheels_moving() const { return valid && (std::fabs(left) > 0 || std::fabs(right) > 0); }
+              const char *activity() const {
+                if (!valid) return "unavailable";
+                if (vacuum_running() || brush_running()) return "cleaning";
+                return wheels_moving() ? "moving" : "stationary";
+              }
+            };
+            auto parse_motors = [](const std::vector<std::string> &lines) {
+              Sample result;
+              bool seen[4] = {};
+              for (const auto &line : lines) {
+                const auto comma = line.find(',');
+                if (comma == std::string::npos) continue;
+                auto key = line.substr(0, comma);
+                const auto first = key.find_first_not_of(" \t\r\n");
+                if (first == std::string::npos) continue;
+                key = key.substr(first, key.find_last_not_of(" \t\r\n") - first + 1);
+                int index = key == "Vacuum_RPM" ? 0 : key == "Brush_RPM" ? 1 : key == "LeftWheel_RPM" ? 2 : key == "RightWheel_RPM" ? 3 : -1;
+                if (index < 0) continue;
+                if (seen[index]) return Sample{}; // Ambiguous/mixed frames are not stationary samples.
+                const auto value = line.substr(comma + 1);
+                char *end = nullptr;
+                const float rpm = std::strtof(value.c_str(), &end);
+                if (end == value.c_str() || !std::isfinite(rpm)) return Sample{};
+                while (*end && std::isspace(static_cast<unsigned char>(*end))) ++end;
+                if (*end) return Sample{};
+                seen[index] = true;
+                if (index == 0) result.vacuum = rpm;
+                else if (index == 1) result.brush = rpm;
+                else if (index == 2) result.left = rpm;
+                else result.right = rpm;
+              }
+              result.valid = seen[0] && seen[1] && seen[2] && seen[3];
+              return result;
+            };
+            // END motor decoder
+            const auto sample = parse_motors(lines);
+            if (!sample.valid) {
+              id(expire_motor_telemetry).stop();
+              id(invalidate_motor_telemetry).execute();
+              return;
+            }
+            id(motorVacuumRPM).publish_state(sample.vacuum);
+            id(motorBrushRPM).publish_state(sample.brush);
+            id(motorLeftWheelRPM).publish_state(sample.left);
+            id(motorRightWheelRPM).publish_state(sample.right);
+            id(vacuumMotorRunning).publish_state(sample.vacuum_running());
+            id(brushRunning).publish_state(sample.brush_running());
+            id(wheelsMoving).publish_state(sample.wheels_moving());
+            id(motorActivity).publish_state(sample.activity());
+            id(expire_motor_telemetry).execute();
           }
 
           else if (command == "GetCharger") {
@@ -439,6 +524,35 @@ text:
 
 
 sensor:
+  - platform: template
+    id: motorVacuumRPM
+    name: "Vacuum Motor RPM"
+    unit_of_measurement: "rpm"
+    accuracy_decimals: 0
+    icon: mdi:fan
+    update_interval: never
+  - platform: template
+    id: motorBrushRPM
+    name: "Brush RPM"
+    unit_of_measurement: "rpm"
+    accuracy_decimals: 0
+    icon: mdi:rotate-right
+    update_interval: never
+  - platform: template
+    id: motorLeftWheelRPM
+    name: "Left Wheel RPM"
+    unit_of_measurement: "rpm"
+    accuracy_decimals: 0
+    icon: mdi:wheel
+    update_interval: never
+  - platform: template
+    id: motorRightWheelRPM
+    name: "Right Wheel RPM"
+    unit_of_measurement: "rpm"
+    accuracy_decimals: 0
+    icon: mdi:wheel
+    update_interval: never
+
   # --- GetCharger ---
   - platform: template
     id: chargerFuelPercent
@@ -477,6 +591,17 @@ sensor:
 
 
 binary_sensor:
+  - platform: template
+    id: vacuumMotorRunning
+    name: "Vacuum Motor Running"
+  - platform: template
+    id: brushRunning
+    name: "Brush Running"
+  - platform: template
+    id: wheelsMoving
+    name: "Wheels Moving"
+    device_class: moving
+
   # --- GetCharger ---
   - platform: template
     id: chargerBatteryOverTemp
@@ -525,6 +650,12 @@ binary_sensor:
 
 
 text_sensor:
+  - platform: template
+    id: motorActivity
+    name: "Motor Activity"
+    icon: mdi:robot-vacuum
+    update_interval: never
+
   - platform: template
     id: nbs_time_text
     name: "NBS Time"

@@ -1,0 +1,16 @@
+GetMotors
+Parameter,Value
+Brush_RPM,1362
+Brush_mA,233
+Vacuum_RPM,9000
+Vacuum_mA,1002
+LeftWheel_RPM,5100
+LeftWheel_Load%,100
+LeftWheel_PositionInMM,78039
+LeftWheel_Speed,290
+RightWheel_RPM,4500
+RightWheel_Load%,89
+RightWheel_PositionInMM,65667
+RightWheel_Speed,256
+ROTATION_SPEED,5.02
+SideBrush_mA,67
